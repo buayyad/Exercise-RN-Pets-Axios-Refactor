@@ -8,48 +8,38 @@ import {
   TouchableOpacity,
   View,
 } from "react-native";
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 import { Pet } from "@/data/pets";
-import { BASE_URL } from "@/api/petsApi";
-import axios from "axios";
+import { getPets } from "@/api/pets";
 import PetItem from "./PetItem";
 import { router } from "expo-router";
+import { useQuery } from "@tanstack/react-query";
 
 const PetList = () => {
-  const [pets, setPets] = useState<Pet[]>([]);
-  const [error, setError] = useState(false);
-  const [loading, setLoading] = useState(false);
-
-  const getPets = async () => {
-    try {
-      setLoading(true);
-      const res = await axios.get(BASE_URL);
-      const data = res.data as Pet[];
-      setPets(data);
-    } catch (error) {
-      setError(true);
-    }
-    setLoading(false);
-  };
-
-  useEffect(() => {
-    getPets();
-  }, []);
+  const {
+    data: pets = [],
+    error,
+    isLoading,
+  } = useQuery({
+    queryKey: ["pets"],
+    queryFn: getPets,
+  });
 
   return (
     <ScrollView
       contentContainerStyle={styles.container}
       style={styles.containerStyle}
     >
-      {/* Search Input */}
-      <View  style={[styles.filterContainer, {alignContent: "center"}]}>
+      <View style={[styles.filterContainer, { alignContent: "center" }]}>
         <TextInput placeholder="Search for a pet" style={styles.searchInput} />
-          <TouchableOpacity style={styles.filterButton} onPress={() => router.push("/addPet")}>
-            <Text>Add</Text>
+        <TouchableOpacity
+          style={styles.filterButton}
+          onPress={() => router.push("/addPet")}
+        >
+          <Text>Add</Text>
         </TouchableOpacity>
-  </View>
+      </View>
 
-      {/* Filter by type */}
       <ScrollView horizontal contentContainerStyle={styles.filterContainer}>
         <TouchableOpacity style={styles.filterButton}>
           <Text>All</Text>
@@ -65,10 +55,9 @@ const PetList = () => {
         </TouchableOpacity>
       </ScrollView>
 
-      {loading && <ActivityIndicator size="large" />}
+      {isLoading && <ActivityIndicator size="large" />}
       {error && <Text>An Error occurred, try again later</Text>}
-      {/* Pet List */}
-      {pets.map((pet) => (
+      {pets.map((pet: Pet) => (
         <PetItem key={pet.id} pet={pet} />
       ))}
     </ScrollView>

@@ -2,12 +2,27 @@ import { Image, StyleSheet, Text, TouchableOpacity, View } from "react-native";
 import React from "react";
 import { Pet } from "@/data/pets";
 import { router } from "expo-router";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { deletePet } from "@/api/pets";
 
 interface PetItemProps {
   pet: Pet;
 }
 
 const PetItem = ({ pet }: PetItemProps) => {
+  const queryClient = useQueryClient();
+
+  const deletePetMutation = useMutation({
+    mutationFn: deletePet,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["pets"] });
+    },
+  });
+
+  const handleAdopt = () => {
+    deletePetMutation.mutate(pet.id.toString());
+  };
+
   return (
     <View style={styles.container}>
       <View style={styles.petInfo}>
@@ -17,7 +32,7 @@ const PetItem = ({ pet }: PetItemProps) => {
 
         <Text style={styles.name}>{pet.name}</Text>
 
-        <Text style={styles.description}>{pet.description}</Text>
+        <Text style={styles.description}>{pet.type}</Text>
       </View>
 
       <View style={styles.buttonContainer}>
@@ -25,7 +40,7 @@ const PetItem = ({ pet }: PetItemProps) => {
           <Text style={styles.buttonText}>Pet</Text>
         </TouchableOpacity>
 
-        <TouchableOpacity style={styles.adoptButton}>
+        <TouchableOpacity style={styles.adoptButton} onPress={handleAdopt}>
           <Text style={styles.buttonText}>Adopt</Text>
         </TouchableOpacity>
       </View>

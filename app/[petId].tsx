@@ -1,36 +1,34 @@
-import { BASE_URL } from "@/api/petsApi";
-import axios from "axios";
+import { getPetById, deletePet as deletePetAPI } from "@/api/pets";
 import { router, useLocalSearchParams } from "expo-router";
-import React, { useEffect, useState } from "react";
-import { Image, StyleSheet, Text, TouchableOpacity, View, ActivityIndicator } from "react-native";
+import React, { useState } from "react";
+import {
+  Image,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
+  ActivityIndicator,
+} from "react-native";
 import { Pet } from "@/data/pets";
-import {Stack} from "expo-router";
+import { Stack } from "expo-router";
+import { useQuery } from "@tanstack/react-query";
 
 const PetDetails = () => {
   const { petId } = useLocalSearchParams();
-  const [pet, setPet] = useState<Pet | undefined>(undefined);
-  const [error, setError] = useState(false);
-  const [loading, setLoading] = useState(false);
 
-  const getPet = async () => {
-    try {
-      setLoading(true);
-      const res = await axios.get(`${BASE_URL}/${petId}`);
-      const data = res.data as Pet;
-      setPet(data);
-    } catch (error) {
-      setError(true);
-    }
-    setLoading(false);
-  };
-
-  useEffect(() => {
-    getPet();
-  }, []);
+  const {
+    data: pet,
+    error,
+    isLoading,
+  } = useQuery({
+    queryKey: ["pet", petId],
+    queryFn: () => getPetById(petId as string),
+    enabled: !!petId,
+  });
 
   const deletePet = async (petId: number) => {
     try {
-      await axios.delete(`${BASE_URL}/${petId}`);
+      await deletePetAPI(petId.toString());
       router.back();
       return true;
     } catch (error) {
@@ -39,8 +37,8 @@ const PetDetails = () => {
   };
   return (
     <View style={styles.container}>
-      <Stack.Screen options={{title:pet?.name || "Pet Details"}}/>
-      {loading && <ActivityIndicator size="large" />}
+      <Stack.Screen options={{ title: pet?.name || "Pet Details" }} />
+      {isLoading && <ActivityIndicator size="large" />}
       {error && <Text>An Error occurred, try again later</Text>}
       {pet && (
         <>
@@ -60,7 +58,6 @@ const PetDetails = () => {
           </TouchableOpacity>
         )}
       </View>
-      
     </View>
   );
 };
